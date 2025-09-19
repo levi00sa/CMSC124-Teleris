@@ -43,8 +43,19 @@ data class Token(
     val line: Int,
 )
 
-class Scanner(private val source: String){
-//freak idk
+class Scanner(private val source: String){      //convert raw source code/string into list of tokens that the lang. understands
+    private var start=0         //why? we need to know where each token starts (start of index of currently scanned lexeme)
+    private var current=0       //we move this forward stepbystep while consuming characters (point to curr char while examining)
+    private var line=1          //helps us report errors w/ precise line info (tracks curr line num )
+
+    fun scanTokens(): List<Token> {            //NOW just placeholder skel. LATER scans entire source string & return list of tokens
+        val tokens=mutableListOf<Token>()      //since we dk how many tokens will there be so we make dynamic list to collect tokens while scanning
+
+        //temporary: EOF token is added to make it compile      //since every scanner needs signal the input end & this allows structure testing b4 implementing everything
+        tokens.add(Token(TokenType.EOF, "", null, line))
+
+        return tokens       //LATER will include all tokens found in source (return tokens list to caller)
+    }
 }
 
 fun main(){
