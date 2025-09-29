@@ -35,10 +35,10 @@ enum class TokenType {
     EQUAL_EQUAL, LESS, GREATER, MINUS_MINUS, PLUS_PLUS, LESS_EQUAL, GREATER_EQUAL, BANG_EQUAL, BANG, EQUAL,
 
     // Symbols
-    LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, LEFT_BRACE, RIGHT_BRACE, COMMA, SEMICOLON, DOT, SLASH, STAR, DOUBLE_QUOTE,
+    LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, LEFT_BRACE, RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, COMMA, SEMICOLON, DOT, SLASH, STAR, DOUBLE_QUOTE, COLON,
 
     // Special markers
-    EOF, ERROR
+    NULL, EOF, ERROR
 }
 
 //token holds info about each recognized piece of source code
@@ -64,6 +64,7 @@ class Scanner(private val source: String) {
         "while" to TokenType.WHILE,
         "for" to TokenType.FOR,
         "return" to TokenType.RETURN,
+        "null" to TokenType.NULL,
     )
 
     //scan the entire source into tokens
@@ -106,6 +107,8 @@ class Scanner(private val source: String) {
             ')' -> addToken(TokenType.RIGHT_PAREN)
             '{' -> addToken(TokenType.LEFT_BRACE)
             '}' -> addToken(TokenType.RIGHT_BRACE)
+            '[' -> addToken(TokenType.LEFT_BRACKET)
+']' -> addToken(TokenType.RIGHT_BRACKET)
             ',' -> addToken(TokenType.COMMA)
             '.' -> addToken(TokenType.DOT)
             '-' -> addToken(TokenType.MINUS)
@@ -113,6 +116,7 @@ class Scanner(private val source: String) {
             ';' -> addToken(TokenType.SEMICOLON)
             '*' -> addToken(TokenType.STAR)
             '=' -> addToken(TokenType.EQUAL)
+            ':' -> addToken(TokenType.COLON)
             '"' -> string()
             '/' -> {
                 when { 
@@ -120,18 +124,6 @@ class Scanner(private val source: String) {
                     while (peek() != '\n' && !isAtEnd())            // while loop skip characters until new line
                     advance()                                   
                 }
-                    match('*') -> {                                                             // for block commments, check if next char is *
-                        while (!(peek() == '*' && peekNext() == '/') && !isAtEnd()) {           // loops until it finds another */ or reaches EOF        
-                            if (peek() == '\n') line++                              
-                            advance()
-                        }
-                        if (!isAtEnd()) {
-                            advance()                                                           // consume *
-                            advance()                                                           // consume /
-                        } else {
-                            println("Undeterminated block comment at &line")
-                        }
-                    }
                     else -> addToken(TokenType.SLASH)
                 }
             }
@@ -144,10 +136,10 @@ class Scanner(private val source: String) {
                 //if unrecognized character, we report it
                 if (c.isDigit()) {
                     number()
-                } else if (c.isLetter() || c == '_') {
+                } else if (c.isLetter() || c == '_' || c == '$') {
                     identifier()
                 } else {
-                    println("Unexpected character: $c on line $line")
+                    println("Error: $c on line $line")
                 }
             }
         }
