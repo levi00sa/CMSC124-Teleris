@@ -29,7 +29,7 @@ enum class TokenType {
     IDENTIFIER, STRING, NUMBER,
 
     // Keywords
-    VAR, FUN, VAL, CLASS, IF, ELSE, FOR, WHILE, RETURN, PRIVATE, PUBLIC, AND, OR, NOT, TRUE, FALSE,
+    SET, FN, VAL, CLASS, IF, ELSE, FOR, WHILE, RETURN, PRIVATE, PUBLIC, AND, OR, NOT, TRUE, FALSE,
 
     // Operators (single and multi-character)
     EQUAL_EQUAL, LESS, GREATER, MINUS_MINUS, PLUS_PLUS, LESS_EQUAL, GREATER_EQUAL, BANG_EQUAL, BANG, EQUAL,
@@ -57,8 +57,8 @@ class Scanner(private val source: String) {
     private val tokens = mutableListOf<Token>()  // dynamic list of tokens found
 
     private val keywords = mapOf(
-        "var" to TokenType.VAR,
-        "fun" to TokenType.FUN,
+        "set" to TokenType.SET,
+        "fn" to TokenType.FN,
         "if" to TokenType.IF,
         "else" to TokenType.ELSE,
         "while" to TokenType.WHILE,
@@ -108,7 +108,7 @@ class Scanner(private val source: String) {
             '{' -> addToken(TokenType.LEFT_BRACE)
             '}' -> addToken(TokenType.RIGHT_BRACE)
             '[' -> addToken(TokenType.LEFT_BRACKET)
-']' -> addToken(TokenType.RIGHT_BRACKET)
+            ']' -> addToken(TokenType.RIGHT_BRACKET)
             ',' -> addToken(TokenType.COMMA)
             '.' -> addToken(TokenType.DOT)
             '-' -> addToken(TokenType.MINUS)
@@ -119,13 +119,27 @@ class Scanner(private val source: String) {
             ':' -> addToken(TokenType.COLON)
             '"' -> string()
             '/' -> {
-                when { 
-                    match ('/') -> {                                // check if next char is /
-                    while (peek() != '\n' && !isAtEnd())            // while loop skip characters until new line
-                    advance()                                   
-                }
-                    else -> addToken(TokenType.SLASH)
-                }
+                if (match ('/')) { 
+                    while (peek() != '\n' && !isAtEnd()) {
+                        advance()
+                    }                                          
+                } else if (match('-')) {
+                    while (true) {
+                        if (isAtEnd()){
+                            println("Error: ---")
+                            return
+                        }
+                        if (peek() == '-' && peekNext() == '/') {
+                            advance() //consume '-'
+                            advance() //consume '/'
+                            break     //skip comment
+                        }
+                        if (peek() == '\n') line++
+                        advance()
+                    }
+                } else {
+                    addToken(TokenType.SLASH)
+                } 
             }
             
             //Whitespace ignored but newlines increase line count
@@ -139,7 +153,7 @@ class Scanner(private val source: String) {
                 } else if (c.isLetter() || c == '_' || c == '$') {
                     identifier()
                 } else {
-                    println("Error: $c on line $line")
+                    println("Error: ---")
                 }
             }
         }
