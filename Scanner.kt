@@ -100,7 +100,7 @@ class Scanner(private val source: String) {                                     
     }
     
     private fun identifier() {
-        while (peek().isLetter() || peek() == '_' || peek() == '$') 
+        while (peek().isLetterOrDigit() || peek() == '_') 
             advance()
         val text = source.substring(start, current)
         when (text) {
