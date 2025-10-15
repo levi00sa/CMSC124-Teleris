@@ -3,23 +3,29 @@ class Scanner(private val source: String) {                                     
     private var current = 0                                                                         // index of the character we are currently scanning
     private var line = 1                                                                            // line counter (helps w error reporting)
     private val tokens = mutableListOf<Token>()                                                     // dynamic list of tokens found
-
-    private val keywords = mapOf(
-        "set" to TokenType.SET,
-        "fn" to TokenType.FN,
-        "if" to TokenType.IF,
-        "else" to TokenType.ELSE,
-        "while" to TokenType.WHILE,
-        "for" to TokenType.FOR,
-        "return" to TokenType.RETURN,
-        "null" to TokenType.NULL,
-    )
+    
+                                                                                                    // Indentation tracking
+    private val indentStack = mutableListOf<Int>()                                                  // stack to track indentation levels
+    private var atStartOfLine = true                                                                // whether we're at the start of a new line
 
     fun scanTokens(): List<Token> {                                                                 // scan the entire source into tokens
         while (!isAtEnd()) {                                                                       // loop until all characters are consumed
             start = current                                                                        // mark beginning of the next token
+            
+                                                                                                    // Handle indentation at start of line
+            if (atStartOfLine) {
+                handleIndentation()
+            }
+            
             scanToken()                                                                            // recognize the next token
         }
+        
+                                                                                                    // Add any remaining DEDENT tokens
+        while (indentStack.isNotEmpty()) {
+            indentStack.removeAt(indentStack.size - 1)
+            tokens.add(Token(TokenType.DEDENT, "", null, line))
+        }
+        
         tokens.add(Token(TokenType.EOF, "", null, line))                                           // add special EOF token at the end
         return tokens
     }
@@ -41,26 +47,95 @@ class Scanner(private val source: String) {                                     
         tokens.add(Token(type, text, literal, line))                                               // push into token list
     }
     
+    private fun handleIndentation() {
+        var indentLevel = 0
+        while (peek() == ' ' || peek() == '\t') {
+            if (peek() == ' ') {
+                indentLevel++
+            } else if (peek() == '\t') {
+                indentLevel += 4 // Treat tab as 4 spaces
+            }
+            advance()
+        }
+        
+        // Skip if line is empty (only whitespace)
+        if (peek() == '\n' || isAtEnd()) {
+            atStartOfLine = false
+            return
+        }
+        
+        val currentIndent = if (indentStack.isEmpty()) 0 else indentStack.last()
+        
+        if (indentLevel > currentIndent) {
+                                                                                                        // Indent
+            indentStack.add(indentLevel)
+            tokens.add(Token(TokenType.INDENT, "", indentLevel, line))
+        } else if (indentLevel < currentIndent) {
+                                                                                                        // Dedent
+            while (indentStack.isNotEmpty() && indentStack.last() > indentLevel) {
+                indentStack.removeAt(indentStack.size - 1)
+                tokens.add(Token(TokenType.DEDENT, "", null, line))
+            }
+            if (indentStack.isEmpty() || indentStack.last() != indentLevel) {
+                println("Error: inconsistent indentation at line $line")
+            }
+        }
+        
+        atStartOfLine = false
+    }
+
     private fun scanToken() {                                                                       // determine what token the curr chara belongs to
         val c = advance()                                                                           // to get the next character using advance
 
         when (c) {
-            '(' -> addToken(TokenType.LEFT_PAREN)
-            ')' -> addToken(TokenType.RIGHT_PAREN)
-            '{' -> addToken(TokenType.LEFT_BRACE)
-            '}' -> addToken(TokenType.RIGHT_BRACE)
-            '[' -> addToken(TokenType.LEFT_BRACKET)
-            ']' -> addToken(TokenType.RIGHT_BRACKET)
-            ',' -> addToken(TokenType.COMMA)
-            '.' -> addToken(TokenType.DOT)
-            '-' -> addToken(TokenType.MINUS)
-            '+' -> addToken(TokenType.PLUS)
-            ';' -> addToken(TokenType.SEMICOLON)
-            '*' -> addToken(TokenType.STAR)
-            '=' -> addToken(TokenType.EQUAL)
-            ':' -> addToken(TokenType.COLON)
-            '"' -> string()
+            '(' -> { atStartOfLine = false; addToken(TokenType.LEFT_PAREN) }
+            ')' -> { atStartOfLine = false; addToken(TokenType.RIGHT_PAREN) }
+            '{' -> { atStartOfLine = false; addToken(TokenType.LEFT_BRACE) }
+            '}' -> { atStartOfLine = false; addToken(TokenType.RIGHT_BRACE) }
+            '[' -> { atStartOfLine = false; addToken(TokenType.LEFT_BRACKET) }
+            ']' -> { atStartOfLine = false; addToken(TokenType.RIGHT_BRACKET) }
+            ',' -> { atStartOfLine = false; addToken(TokenType.COMMA) }
+            '.' -> { atStartOfLine = false; addToken(TokenType.DOT) }
+            '-' -> { atStartOfLine = false; addToken(TokenType.MINUS) }
+            '+' -> { atStartOfLine = false; addToken(TokenType.PLUS) }
+            ';' -> { atStartOfLine = false; addToken(TokenType.SEMICOLON) }
+            '*' -> { atStartOfLine = false; addToken(TokenType.STAR) }
+            '=' -> {
+                atStartOfLine = false
+                if (match('=')) {
+                    addToken(TokenType.EQUAL_EQUAL)
+                } else {
+                    addToken(TokenType.EQUAL)
+                }
+            }
+            '!' -> {
+                atStartOfLine = false
+                if (match('=')) {
+                    addToken(TokenType.BANG_EQUAL)
+                } else {
+                    addToken(TokenType.BANG)
+                }
+            }
+            '<' -> {
+                atStartOfLine = false
+                if (match('=')) {
+                    addToken(TokenType.LESS_EQUAL)
+                } else {
+                    addToken(TokenType.LESS)
+                }
+            }
+            '>' -> {
+                atStartOfLine = false
+                if (match('=')) {
+                    addToken(TokenType.GREATER_EQUAL)
+                } else {
+                    addToken(TokenType.GREATER)
+                }
+            }
+            ':' -> { atStartOfLine = false; addToken(TokenType.COLON) }
+            '"' -> { atStartOfLine = false; string() }
             '/' -> {
+                atStartOfLine = false
                 if (match ('/')) { 
                     while (peek() != '\n' && !isAtEnd()) {
                         advance()
@@ -84,10 +159,20 @@ class Scanner(private val source: String) {                                     
                 } 
             }
             
-            ' ', '\r', '\t' -> {}                                                                 // Whitespace ignored but newlines increase line count
-            '\n' -> line++
+            ' ', '\r', '\t' -> {
+                if (atStartOfLine) {
+                    // Count indentation at start of line
+                    handleIndentation()
+                }
+            }
+            '\n' -> {
+                line++
+                atStartOfLine = true
+                tokens.add(Token(TokenType.NEWLINE, "", null, line - 1))
+            }
 
             else -> {                                                                               // if unrecognized character, we report it
+                atStartOfLine = false                                                               // no longer at start of line
                 if (c.isDigit()) {
                     number()
                 } else if (c.isLetter() || c == '_' || c == '$') {
@@ -100,17 +185,21 @@ class Scanner(private val source: String) {                                     
     }
     
     private fun identifier() {
+        atStartOfLine = false
         while (peek().isLetterOrDigit() || peek() == '_') 
             advance()
         val text = source.substring(start, current)
         when (text) {
             "true" -> addToken(TokenType.TRUE, true)
             "false" -> addToken(TokenType.FALSE, false)
+            "null" -> addToken(TokenType.NULL, null)
+            "nil" -> addToken(TokenType.NULL, null)
             else -> addToken(keywords[text] ?: TokenType.IDENTIFIER)
         }
     }
 
     private fun number() {
+        atStartOfLine = false
         while (peek().isDigit()) advance()
         if (peek() == '.' && peekNext().isDigit()) {                                               // Handling float
             advance()                                                                               // Consume the '.'
@@ -126,6 +215,7 @@ class Scanner(private val source: String) {                                     
     }
 
     private fun string() {
+        atStartOfLine = false
         while (peek() != '"' && !isAtEnd()){
             if (peek() == '\n') line++
             advance()

@@ -35,5 +35,7 @@ enum class TokenType {
     LEFT_PAREN, RIGHT_PAREN, PLUS, MINUS, LEFT_BRACE, RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, 
     COMMA, SEMICOLON, DOT, SLASH, STAR, DOUBLE_QUOTE, COLON,                                        // Symbols
 
-    NULL, EOF, ERROR                                                                                // Special markers
+    NULL, EOF, ERROR,                                                                               // Special markers
+    
+    INDENT, DEDENT, NEWLINE                                                                         // Indentation tokens
 }
