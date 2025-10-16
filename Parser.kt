@@ -18,7 +18,11 @@ class Parser(private val tokens: List<Token>) {
 
     fun parse(): Expr? {
         return try {
-            expression()
+            val expr = expression()                                       
+            if (!isAtEnd()) {                                                   // Check that we've consumed all tokens except EOF
+                throw error(peek(), "Unexpected token after expression.")
+            }
+            expr
         } catch (e: ParseError) {
             null
         }
@@ -102,7 +106,7 @@ class Parser(private val tokens: List<Token>) {
         return primary()
     }
 
-    // primary → NUMBER | STRING | "true" | "false" | "null" | "(" expression ")"
+    // NOTE: primary → NUMBER | STRING | "true" | "false" | "null" | IDENTIFIER | "(" expression ")"
     private fun primary(): Expr {
         if (match(TokenType.NUMBER)) {
             return Expr.Literal(previous().literal) // scanner stores Double
@@ -113,6 +117,7 @@ class Parser(private val tokens: List<Token>) {
         if (match(TokenType.TRUE)) return Expr.Literal(true)
         if (match(TokenType.FALSE)) return Expr.Literal(false)
         if (match(TokenType.NULL)) return Expr.Literal(null)
+        if (match(TokenType.IDENTIFIER)) { return Expr.Variable(previous())}
 
         if (match(TokenType.LEFT_PAREN)) {
             val expr = expression()
