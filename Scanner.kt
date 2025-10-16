@@ -1,3 +1,23 @@
+// keyword lookup: if matched, token becomes keyword type; otherwise IDENTIFIER
+private val keywords = mapOf(
+    "set" to TokenType.SET,
+    "fn" to TokenType.FN,
+    "val" to TokenType.VAL,
+    "class" to TokenType.CLASS,
+    "if" to TokenType.IF,
+    "else" to TokenType.ELSE,
+    "for" to TokenType.FOR,
+    "while" to TokenType.WHILE,
+    "return" to TokenType.RETURN,
+    "and" to TokenType.AND,
+    "or" to TokenType.OR,
+    "not" to TokenType.NOT,
+    "true" to TokenType.TRUE,
+    "false" to TokenType.FALSE,
+    "null" to TokenType.NULL
+)
+
+
 class Scanner(private val source: String) {                                                      // scanner takes raw source code & breaks it into tokens
     private var start = 0                                                                           // index where the current token begins
     private var current = 0                                                                         // index of the character we are currently scanning
@@ -193,7 +213,6 @@ class Scanner(private val source: String) {                                     
             "true" -> addToken(TokenType.TRUE, true)
             "false" -> addToken(TokenType.FALSE, false)
             "null" -> addToken(TokenType.NULL, null)
-            "nil" -> addToken(TokenType.NULL, null)
             else -> addToken(keywords[text] ?: TokenType.IDENTIFIER)
         }
     }

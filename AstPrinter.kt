@@ -1,6 +1,3 @@
-//print readable parenthesized representation of AST
-//this prints the AST in the required parenthesized format
-
 // AstPrinter.kt
 object AstPrinter {
     fun print(expr: Expr): String {
@@ -10,16 +7,16 @@ object AstPrinter {
             is Expr.Unary -> "(${expr.operator.lexeme} ${print(expr.right)})"
             is Expr.Binary -> "(${expr.operator.lexeme} ${print(expr.left)} ${print(expr.right)})"
             is Expr.Block -> {
-                val statements = expr.statements.joinToString(" ") { print(it) }
+                // Use AstPrinter.print inside lambda so we return strings (not Unit).
+                val statements = expr.statements.joinToString(" ") { AstPrinter.print(it) }
                 "(block $statements)"
             }
-            //else -> "<?>"
         }
     }
 
     private fun literalToString(value: Any?): String {
         return when (value) {
-            null -> "nil"
+            null -> "null"
             is Double -> value.toString()
             else -> value.toString()
         }
