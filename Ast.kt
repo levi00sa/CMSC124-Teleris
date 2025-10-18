@@ -1,7 +1,6 @@
-//AST node types for the parser to build an AST since Kotlin does not support sealed interfaces
-//AST is actually an abstract class so that we can have a common supertype for all nodes
-//what happens here is that we have a sealed class Expression (Expr) with all the nodes the parser needs
 // Ast.kt
+// Defines the AST node types used by the parser and printer.
+
 sealed class Expr {
     data class Literal(val value: Any?) : Expr()
     data class Variable(val name: Token) : Expr()
@@ -10,3 +9,8 @@ sealed class Expr {
     data class Binary(val left: Expr, val operator: Token, val right: Expr) : Expr()
     data class Block(val statements: List<Expr>) : Expr()
 }
+
+//sealed class Expr with data classes for the node kinds 
+    //your Parser builds.
+// Literal.value is Any? because scanner stores 
+    //Double, String, Boolean or null.

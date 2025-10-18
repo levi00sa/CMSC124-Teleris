@@ -10,7 +10,6 @@
 //Support grouping with parentheses
 //Include basic error reporting for malformed expressions (unbalanced parenthesis, etc.)
 
-// Parser.kt
 class ParseError(message: String) : RuntimeException(message)
 
 class Parser(private val tokens: List<Token>) {
@@ -117,7 +116,11 @@ class Parser(private val tokens: List<Token>) {
         if (match(TokenType.TRUE)) return Expr.Literal(true)
         if (match(TokenType.FALSE)) return Expr.Literal(false)
         if (match(TokenType.NULL)) return Expr.Literal(null)
+<<<<<<< HEAD
+        if (match(TokenType.IDENTIFIER))return Expr.Literal(previous().lexeme)
+=======
         if (match(TokenType.IDENTIFIER)) { return Expr.Variable(previous())}
+>>>>>>> upstream/main
 
         if (match(TokenType.LEFT_PAREN)) {
             val expr = expression()
@@ -154,8 +157,11 @@ class Parser(private val tokens: List<Token>) {
         return previous()
     }
 
-    private fun isAtEnd(): Boolean = peek().type == TokenType.EOF
+    private fun isAtEnd(): Boolean peek().type == TokenType.EOF
+   // fun isAtEndPublic(): Boolean = isAtEnd()
 
+    //fun peekToken(): Token =peek()
+    
     private fun peek(): Token = tokens[current]
 
     private fun previous(): Token = tokens[current - 1]

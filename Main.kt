@@ -12,15 +12,17 @@ fun main() {                                                                    
         val parser = Parser(tokens)                                                           // to create parser for those tokens
         val expr = parser.parse()                                                             // to parse tokens into an expression (AST)
 
+      //  if(expr!=null && !parser.isAtEnd()){
+       //     System.err.println("[line $ {parser.peek().line}] Error at '$ 
+       //     {parser.peek().lexeme}': Unexpected tokens after expression.")
+       //         continue
+       // }
 
         if(expr != null) {                                                                    // if parsing was successful
             println(AstPrinter.print(expr))                                                   // print the AST in parenthesized format
         } else {
             println("Parsing error occurred.")                                                // if there was a parsing error
         }
-       // for (token in tokens) {
-         //   println(token)                                                                  // to print tokens for debugging
-        //}
     }
 }
 
